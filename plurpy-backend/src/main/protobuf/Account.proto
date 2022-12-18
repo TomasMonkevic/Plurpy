@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package org.tomasmo.plurpy.v1.account;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+message Account {
+  google.protobuf.StringValue id = 1;
+  google.protobuf.Timestamp date_created = 2;
+  google.protobuf.Timestamp date_updated = 3;
+  google.protobuf.Int32Value revision = 4;
+  google.protobuf.StringValue name = 5;
+}

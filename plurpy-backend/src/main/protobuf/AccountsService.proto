@@ -1,22 +1,8 @@
 syntax = "proto3";
 
-//TODO move to a separate package
-//option java_multiple_files = true;
-//option java_package = "org.tomasmo.plurpy_contract";
-//option java_outer_classname = "AccountsService";
-//option objc_class_prefix = "RTG";
-import "google/protobuf/timestamp.proto"; //TODO this breaks zio
+package org.tomasmo.plurpy.v1.account;
 
-package plurpy_contract;
-
-//TODO move to a separate file
-message Account {
-  string id = 1;
-  google.protobuf.Timestamp date_created = 2;
-//  google.protobuf.Timestamp date_updated = 3;
-  int32 revision = 4;
-  string name = 5;
-}
+import "Account.proto";
 
 service AccountsService {
 

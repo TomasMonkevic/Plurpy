@@ -1,8 +1,8 @@
 package org.tomasmo.plurpy
 
 import io.grpc.Status
-import plurpy_contract.AccountsService.ZioAccountsService.ZAccountsService
-import plurpy_contract.AccountsService._
+import org.tomasmo.plurpy.v1.account.AccountsService.ZioAccountsService.ZAccountsService
+import org.tomasmo.plurpy.v1.account.AccountsService._
 import zio.Console.printLine
 import zio.ZIO
 
