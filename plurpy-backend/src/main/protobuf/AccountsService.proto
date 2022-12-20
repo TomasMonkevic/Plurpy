@@ -17,7 +17,8 @@ service AccountsService {
 }
 
 message SignupRequest {
-  Account account = 1;
+  AccountInfo account_info = 1;
+  string password = 2;
 }
 
 message SignupResponse {

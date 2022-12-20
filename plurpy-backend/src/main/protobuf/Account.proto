@@ -10,5 +10,9 @@ message Account {
   google.protobuf.Timestamp date_created = 2;
   google.protobuf.Timestamp date_updated = 3;
   google.protobuf.Int32Value revision = 4;
-  google.protobuf.StringValue name = 5;
+  AccountInfo information = 5;
+}
+
+message AccountInfo {
+  google.protobuf.StringValue name = 1;
 }
