@@ -4,5 +4,5 @@ CREATE TABLE account (
   date_updated TIMESTAMP NOT NULL,
   revision  INT NOT NULL,
   name  CHAR(25) NOT NULL,
-  password_hash CHAR(60) NOT NULL,
-)
+  password_hash CHAR(60) NOT NULL
+);
