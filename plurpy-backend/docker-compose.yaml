@@ -1,0 +1,13 @@
+version: '3.1'
+
+services:
+
+  plurpy_db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: mysecretpassword #todo move to dev config
+    ports:
+      - 25432:5432
+    volumes:
+      - ./src/main/sql:/docker-entrypoint-initdb.d/:ro
