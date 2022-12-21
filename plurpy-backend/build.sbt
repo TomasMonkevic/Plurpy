@@ -15,9 +15,13 @@ lazy val root = (project in file("."))
     ),
 
     libraryDependencies ++= Seq(
+      "org.slf4j" % "slf4j-simple" % "2.0.5",
+
       "io.grpc" % "grpc-netty" % "1.51.0",
+
       "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion,
       "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
+
       "io.getquill" %% "quill-jdbc-zio" % "4.6.0",
       "org.postgresql" % "postgresql" % "42.2.8",
     )
