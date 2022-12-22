@@ -6,14 +6,15 @@ import "Account.proto";
 
 service AccountsService {
 
-  //TODO documentation
+  // Creates an account and returns a bearer token for the account
+  //
+  // Notes:
+  // No verification of the account is done to make sure it's not a bot
+  // The endpoint is not rate limited
   rpc Signup(SignupRequest) returns (SignupResponse) {}
 
-  //TODO documentation
+  // Returns bearer token if account credentials are correct else 401 (Unauthorized) will be returned
   rpc Login(LoginRequest) returns (LoginResponse) {}
-
-  //TODO documentation
-  rpc Logout(LogoutRequest) returns (LogoutResponse) {}
 }
 
 message SignupRequest {
@@ -23,7 +24,7 @@ message SignupRequest {
 
 message SignupResponse {
   Account account = 1;
-  string auth_token = 2;
+  string bearer_token = 2;
 }
 
 message LoginRequest {
@@ -32,11 +33,5 @@ message LoginRequest {
 }
 
 message LoginResponse {
-  string auth_token = 1;
-}
-
-message LogoutRequest {
-}
-
-message LogoutResponse {
+  string bearer_token = 1;
 }

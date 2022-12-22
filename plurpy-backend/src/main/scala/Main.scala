@@ -3,6 +3,7 @@ package org.tomasmo.plurpy
 import model.Configs.AuthorizerConfig
 import utils.DefaultTimeProvider
 import persistence.AccountsRepositoryImpl
+import service.Authorizer
 import api.AccountsServiceImpl
 
 import io.getquill.SnakeCase
@@ -43,11 +44,14 @@ object Main extends zio.ZIOAppDefault {
 
   val accountsRepositoryLayer = ZLayer.fromFunction(AccountsRepositoryImpl(_, _))
 
+  val authorizerLayer = ZLayer.fromFunction(Authorizer(_, _))
+
   val accountsServiceLayer = ZLayer.make[AccountsServiceImpl](
-    ZLayer.fromFunction(AccountsServiceImpl(_, _, _)),
+    ZLayer.fromFunction(AccountsServiceImpl(_, _)),
     accountsRepositoryLayer,
     quillLayer,
     dsLayer,
+    authorizerLayer,
     timeProviderLayer,
     configLayer,
   )
