@@ -20,7 +20,7 @@ import zio.logging.backend.SLF4J
 
 object Main extends zio.ZIOAppDefault {
 
-  override val bootstrap = SLF4J.slf4j
+  override val bootstrap = Runtime.removeDefaultLoggers >>> SLF4J.slf4j
 
   def port: Int = 9000
 
