@@ -16,6 +16,8 @@ lazy val root = (project in file("."))
 
     libraryDependencies ++= Seq(
       "org.slf4j" % "slf4j-simple" % "2.0.5",
+      "dev.zio" %% "zio-logging" % "2.1.5",
+      "dev.zio" %% "zio-logging-slf4j" % "2.1.5",
 
       "io.grpc" % "grpc-netty" % "1.51.0",
 
@@ -29,5 +31,9 @@ lazy val root = (project in file("."))
 
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.14.1",
       "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.1",
+
+      "dev.zio" %% "zio-config" % "3.0.6",
+      "dev.zio" %% "zio-config-typesafe" % "3.0.6",
+      "dev.zio" %% "zio-config-magnolia" % "3.0.6",
     )
   )

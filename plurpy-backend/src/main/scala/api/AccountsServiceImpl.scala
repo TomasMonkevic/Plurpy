@@ -1,10 +1,11 @@
 package org.tomasmo.plurpy
-package service
+package api
 
 import utils.TimeConverters.toTimestamp
 import utils.JsonUtils.toJson
 import utils.TimeProvider
 import model.{Account => AccountDto, AccountInfo => AccountInfoDto}
+import model.Configs.AuthorizerConfig
 import persistence.AccountsRepositoryImpl
 import v1.account.AccountsService.ZioAccountsService.ZAccountsService
 import v1.account.AccountsService._
@@ -19,11 +20,13 @@ import java.time.temporal.ChronoUnit
 //TODO later don't depend on specific effect type. Use AccountsRepository
 final case class AccountsServiceImpl(
     accountsRepo: AccountsRepositoryImpl,
-    timeProvider: TimeProvider
+    timeProvider: TimeProvider,
+    authConfig: AuthorizerConfig, //TODO should the config be in environment? Maye one global config is better?
 ) extends ZAccountsService[Any, Any] {
   override def signup(request: SignupRequest): ZIO[Any, Status, SignupResponse] = {
     //TODO input validation and mapper
     val foo = for {
+      _ <- ZIO.logInfo(s"My secret key I should not show: ${authConfig.key}")
       account <- accountsRepo.insert(AccountInfoDto(
         name = request.getAccountInfo.getName,
         passwordHash = request.password //TODO password hashing
@@ -53,10 +56,7 @@ final case class AccountsServiceImpl(
       issuedAt = Some(now.getEpochSecond)
     )
 
-    //TODO read from config file
-    val key = "secretKey"
-
-    JwtZIOJson.encode(claim, key, JwtAlgorithm.HS256)
+    JwtZIOJson.encode(claim, authConfig.key, JwtAlgorithm.HS256)
   }
 
   override def login(request: LoginRequest): ZIO[Any, Status, LoginResponse] = ???
