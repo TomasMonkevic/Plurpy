@@ -1,6 +1,7 @@
 package org.tomasmo.plurpy
 package persistence
 
+import utils.TimeProvider
 import model.{Account, AccountInfo}
 
 import io.getquill.SnakeCase
@@ -23,13 +24,15 @@ object Bar {
   type Foo[_] = ZIO[Any, SQLException, _]
 }
 
-final case class AccountsRepositoryImpl(quill: Quill.Postgres[SnakeCase]) extends AccountsRepository[Bar.Foo] {
+final case class AccountsRepositoryImpl(
+    quill: Quill.Postgres[SnakeCase],
+    timeProvider: TimeProvider
+) extends AccountsRepository[Bar.Foo] {
 
   import quill._
 
   def insert(accountInfo: AccountInfo): ZIO[Any, SQLException, Account] = {
-    //TODO make time provider
-    val now = Instant.now()
+    val now = timeProvider.now()
 
     val insertAccountQuery = quote {
       query[Account].insertValue(lift(

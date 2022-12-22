@@ -1,5 +1,6 @@
 package org.tomasmo.plurpy
 
+import utils.DefaultTimeProvider
 import persistence.AccountsRepositoryImpl
 import service.AccountsServiceImpl
 
@@ -17,16 +18,19 @@ object Main extends zio.ZIOAppDefault {
   def welcome: ZIO[Any, Throwable, Unit] =
     printLine("Server is running. Press Ctrl-C to stop.")
 
+  val timeProviderLayer = ZLayer.succeed(new DefaultTimeProvider)
+
   val quillLayer = Quill.Postgres.fromNamingStrategy(SnakeCase)
   val dsLayer = Quill.DataSource.fromPrefix("myDatabaseConfig")
 
-  val accountsRepositoryLayer = ZLayer.fromFunction(AccountsRepositoryImpl(_))
+  val accountsRepositoryLayer = ZLayer.fromFunction(AccountsRepositoryImpl(_, _))
 
   val accountsServiceLayer = ZLayer.make[AccountsServiceImpl](
-    ZLayer.fromFunction(AccountsServiceImpl(_)),
+    ZLayer.fromFunction(AccountsServiceImpl(_, _)),
     accountsRepositoryLayer,
     quillLayer,
     dsLayer,
+    timeProviderLayer,
   )
 
   def builder = ServerBuilder.forPort(port).addService(ProtoReflectionService.newInstance())

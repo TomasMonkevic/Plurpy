@@ -2,26 +2,33 @@ package org.tomasmo.plurpy
 package service
 
 import utils.TimeConverters.toTimestamp
-import model.{Account => AccountDto, AccountInfo => AccountInfoDto} //TODO maybe rename the entities
+import utils.JsonUtils.toJson
+import utils.TimeProvider
+import model.{Account => AccountDto, AccountInfo => AccountInfoDto}
 import persistence.AccountsRepositoryImpl
 import v1.account.AccountsService.ZioAccountsService.ZAccountsService
 import v1.account.AccountsService._
 import v1.account.Account.{Account, AccountInfo}
 
+import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtZIOJson}
 import io.grpc.Status
-import zio.Console.printLine
 import zio.ZIO
 
+import java.time.temporal.ChronoUnit
+
 //TODO later don't depend on specific effect type. Use AccountsRepository
-final case class AccountsServiceImpl(accountsRepo: AccountsRepositoryImpl) extends ZAccountsService[Any, Any] {
+final case class AccountsServiceImpl(
+    accountsRepo: AccountsRepositoryImpl,
+    timeProvider: TimeProvider
+) extends ZAccountsService[Any, Any] {
   override def signup(request: SignupRequest): ZIO[Any, Status, SignupResponse] = {
     //TODO input validation and mapper
     val foo = for {
-      a <- accountsRepo.insert(AccountInfoDto(
+      account <- accountsRepo.insert(AccountInfoDto(
         name = request.getAccountInfo.getName,
         passwordHash = request.password //TODO password hashing
       ))
-    } yield SignupResponse(account = Option(toProto(a)), authToken = "very-legit-auth-token")
+    } yield SignupResponse(account = Option(toProto(account)), authToken = encode(account)) //TODO maybe don't return auth token on signup only on login?
     foo.orElseFail(Status.INTERNAL) //TODO is this it?
   }
 
@@ -34,6 +41,22 @@ final case class AccountsServiceImpl(accountsRepo: AccountsRepositoryImpl) exten
       revision = Option(accDto.revision),
       information = Option(AccountInfo(name = Option(accDto.accountInfo.name))),
     )
+  }
+
+  //TODO move to separate service
+  private def encode(accDto: AccountDto): String = {
+    val now = timeProvider.now()
+
+    val claim = JwtClaim(
+      content = toJson(Map("accountId" -> accDto.id)),
+      expiration = Some(now.plus(30, ChronoUnit.MINUTES).getEpochSecond),
+      issuedAt = Some(now.getEpochSecond)
+    )
+
+    //TODO read from config file
+    val key = "secretKey"
+
+    JwtZIOJson.encode(claim, key, JwtAlgorithm.HS256)
   }
 
   override def login(request: LoginRequest): ZIO[Any, Status, LoginResponse] = ???

@@ -24,5 +24,10 @@ lazy val root = (project in file("."))
 
       "io.getquill" %% "quill-jdbc-zio" % "4.6.0",
       "org.postgresql" % "postgresql" % "42.2.8",
+
+      "com.github.jwt-scala" %% "jwt-zio-json" % "9.1.2",
+
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.14.1",
+      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.1",
     )
   )
