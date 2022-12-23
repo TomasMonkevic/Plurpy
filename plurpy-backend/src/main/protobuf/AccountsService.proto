@@ -24,7 +24,7 @@ message SignupRequest {
 
 message SignupResponse {
   Account account = 1;
-  string bearer_token = 2;
+  string access_token = 2;
 }
 
 message LoginRequest {
@@ -33,5 +33,5 @@ message LoginRequest {
 }
 
 message LoginResponse {
-  string bearer_token = 1;
+  string access_token = 1;
 }

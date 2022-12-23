@@ -24,9 +24,9 @@ final case class AccountsServiceImpl(
         name = request.getAccountInfo.getName,
         passwordHash = request.password //TODO password hashing
       ))
-      bearerToken <- authorizer.createBearerToken(account.id)
+      accessToken <- authorizer.accessToken(account.id)
       _ <- ZIO.logInfo(s"Account created. Data(accountId: ${account.id})") //TODO create a wrapper for this data
-    } yield SignupResponse(account = Option(toProto(account)), bearerToken = bearerToken)
+    } yield SignupResponse(account = Option(toProto(account)), accessToken = accessToken)
 
     createAccount.orElseFail(Status.INTERNAL) //TODO is this it?
   }

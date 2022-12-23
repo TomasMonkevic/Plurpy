@@ -20,7 +20,7 @@ case class Authorizer(
 
   private val SigningAlgorithm = JwtAlgorithm.HS256
 
-  def createBearerToken(accountId: UUID): IO[IOException, String] = for {
+  def accessToken(accountId: UUID): IO[IOException, String] = for {
     jsonContent <- toJson(Map("accountId" -> accountId))
     token <- createJwtToken(jsonContent)
   } yield token
