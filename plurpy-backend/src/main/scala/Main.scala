@@ -42,8 +42,16 @@ object Main extends zio.ZIOAppDefault {
 
   val BearerTokenKey = io.grpc.Metadata.Key.of("user-key", io.grpc.Metadata.ASCII_STRING_MARSHALLER)
 
-  def getAuthContext(bearerToken: String): ZIO[Authorizer, Status, AuthContext] = {
-    ZIO.environmentWithZIO[Authorizer](_.get.getAuthContext(bearerToken)).orElseFail(Status.UNAUTHENTICATED.withDescription("Invalid or missing access token"))
+  def getAuthContext(
+      auth: Authorizer,
+      bearerToken: String
+  ): ZIO[Any, Status, AuthContext] = {
+    auth
+      .getAuthContext(bearerToken)
+      .orElseFail(
+        Status.UNAUTHENTICATED
+          .withDescription("Invalid or missing access token")
+      )
   }
 
   val timeProviderLayer = ZLayer.succeed(new DefaultTimeProvider)
@@ -55,16 +63,24 @@ object Main extends zio.ZIOAppDefault {
 
   val authorizerLayer = ZLayer.fromFunction(Authorizer(_, _))
 
-  val foo = ZLayer.fromFunction(AccountsServiceImpl(_: AccountsRepositoryImpl, _ : Authorizer)
-    .transformContextZIO {
-    (rc: RequestContext) =>
-      rc.metadata.get(BearerTokenKey)
-        .someOrFail(Status.UNAUTHENTICATED.withDescription("Invalid or missing access token")) //TODO this is duplication
-        .flatMap(getAuthContext(_))
-  }
+  val foo: ZLayer[
+    AccountsRepositoryImpl with Authorizer,
+    Nothing,
+    ZAccountsService[Any, RequestContext]
+  ] = ZLayer.fromFunction(
+    (accountRepoImpl: AccountsRepositoryImpl, auth: Authorizer) =>
+      AccountsServiceImpl(accountRepoImpl, auth)
+        .transformContextZIO { (rc: RequestContext) =>
+          rc.metadata
+            .get(BearerTokenKey)
+            .someOrFail(
+              Status.UNAUTHENTICATED
+                .withDescription("Invalid or missing access token")
+            ) // TODO this is duplication
+            .flatMap(getAuthContext(auth, _))
+        }
   )
-
-  val accountsServiceLayer = ZLayer.make[ZAccountsService[Authorizer, RequestContext]](
+  val accountsServiceLayer = ZLayer.make[ZAccountsService[Any, RequestContext]](
     foo,
     accountsRepositoryLayer,
     quillLayer,
@@ -74,7 +90,9 @@ object Main extends zio.ZIOAppDefault {
     configLayer,
   )
 
-  def serverLive = ServerLayer.fromServiceLayer(ServerBuilder.forPort(port))(accountsServiceLayer)
+  def serverLive = ServerLayer.fromServiceLayer(ServerBuilder.forPort(port))(
+    accountsServiceLayer
+  )
 
   val services = welcome *> serverLive.build *> ZIO.never
 
