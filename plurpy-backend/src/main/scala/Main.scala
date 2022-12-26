@@ -1,7 +1,6 @@
 package org.tomasmo.plurpy
 
 import model.AuthContext
-import service.UnauthenticatedException
 import v1.account.AccountsService.ZioAccountsService.ZAccountsService
 import model.Configs.AuthorizerConfig
 import utils.DefaultTimeProvider
@@ -11,9 +10,8 @@ import api.AccountsServiceImpl
 
 import io.getquill.SnakeCase
 import io.getquill.jdbczio.Quill
-import io.grpc.{ServerBuilder, Status}
-import io.grpc.protobuf.services.ProtoReflectionService
-import scalapb.zio_grpc.{RequestContext, Server, ServerLayer}
+import io.grpc.{ServerBuilder}
+import scalapb.zio_grpc.{RequestContext, ServerLayer}
 import zio.Console.printLine
 import zio._
 import zio.config._
@@ -59,7 +57,7 @@ object Main extends zio.ZIOAppDefault {
 
   val authorizerLayer = ZLayer.fromFunction(Authorizer(_, _))
 
-  val foo: ZLayer[
+  val accountServiceImplLayer: ZLayer[
     AccountsRepositoryImpl with Authorizer,
     Nothing,
     ZAccountsService[Any, RequestContext]
@@ -68,12 +66,12 @@ object Main extends zio.ZIOAppDefault {
       AccountsServiceImpl(accountRepoImpl, auth)
         .transformContextZIO { (rc: RequestContext) =>
           rc.metadata
-            .get(AuthorizationTokenKey).someOrElse("Bearer EMPTY") //TODO fix this hack
-            .flatMap(authorization => getAuthContext(auth, authorization.split(" ")(1))) //TODO not sure this should be here also validation if that is a bearer token would be nice
+            .get(AuthorizationTokenKey)
+            .flatMap(authorization => authorization.map(a => getAuthContext(auth, a.split(" ")(1))).getOrElse(ZIO.succeed(AuthContext.empty))) //TODO not sure this should be here also validation if that is a bearer token would be nice
         }
   )
   val accountsServiceLayer = ZLayer.make[ZAccountsService[Any, RequestContext]](
-    foo,
+    accountServiceImplLayer,
     accountsRepositoryLayer,
     quillLayer,
     dsLayer,

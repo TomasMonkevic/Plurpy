@@ -34,8 +34,7 @@ final case class AccountsServiceImpl(
   override def login(request: LoginRequest): ZIO[Any, Status, LoginResponse] = ???
 
   override def getAccount(request: GetAccountRequest): ZIO[AuthContext, Status, GetAccountResponse] = for {
-    maybeAccountId <- ZIO.service[AuthContext].map(_.accountId)
-    accountId <- ZIO.fromOption(maybeAccountId).orElseFail(Status.UNAUTHENTICATED.withDescription("Invalid or missing access token"))
+    accountId <- authorizer.getAccountId().orElseFail(Status.UNAUTHENTICATED.withDescription("Invalid or missing access token"))
     maybeAccount <- accountsRepo.get(accountId).orElseFail(Status.INTERNAL)
     account <- ZIO.fromOption(maybeAccount).orElseFail(Status.UNAUTHENTICATED.withDescription("Invalid or missing access token"))
     _ <- ZIO.logInfo(s"Account retrieved. Data(accountId: ${account.id})")

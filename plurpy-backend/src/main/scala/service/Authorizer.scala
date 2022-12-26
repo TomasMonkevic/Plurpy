@@ -36,8 +36,13 @@ case class Authorizer(
       accountContext <- fromJson(jwtClaim.content)(classOf[AuthContext])
     } yield accountContext
 
-    getAuthContext.orElse(ZIO.succeed(AuthContext(accountId = None)))
+    getAuthContext.orElse(ZIO.succeed(AuthContext.empty))
   }
+
+  def getAccountId(): ZIO[AuthContext, UnauthenticatedException, UUID] = for {
+    maybeAccountId <- ZIO.service[AuthContext].map(_.accountId)
+    accountId <- ZIO.fromOption(maybeAccountId).orElseFail(new UnauthenticatedException)
+  } yield accountId
 
   private def createJwtToken(content: String): UIO[String] = {
     val now = timeProvider.now()
