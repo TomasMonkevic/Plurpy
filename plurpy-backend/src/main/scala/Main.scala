@@ -40,18 +40,14 @@ object Main extends zio.ZIOAppDefault {
       }
     }
 
-  val BearerTokenKey = io.grpc.Metadata.Key.of("user-key", io.grpc.Metadata.ASCII_STRING_MARSHALLER)
+  val AuthorizationTokenKey = io.grpc.Metadata.Key.of("authorization", io.grpc.Metadata.ASCII_STRING_MARSHALLER)
 
   def getAuthContext(
       auth: Authorizer,
       bearerToken: String
-  ): ZIO[Any, Status, AuthContext] = {
+  ): UIO[AuthContext] = {
     auth
       .getAuthContext(bearerToken)
-      .orElseFail(
-        Status.UNAUTHENTICATED
-          .withDescription("Invalid or missing access token")
-      )
   }
 
   val timeProviderLayer = ZLayer.succeed(new DefaultTimeProvider)
@@ -72,12 +68,8 @@ object Main extends zio.ZIOAppDefault {
       AccountsServiceImpl(accountRepoImpl, auth)
         .transformContextZIO { (rc: RequestContext) =>
           rc.metadata
-            .get(BearerTokenKey)
-            .someOrFail(
-              Status.UNAUTHENTICATED
-                .withDescription("Invalid or missing access token")
-            ) // TODO this is duplication
-            .flatMap(getAuthContext(auth, _))
+            .get(AuthorizationTokenKey).someOrElse("Bearer EMPTY") //TODO fix this hack
+            .flatMap(authorization => getAuthContext(auth, authorization.split(" ")(1))) //TODO not sure this should be here also validation if that is a bearer token would be nice
         }
   )
   val accountsServiceLayer = ZLayer.make[ZAccountsService[Any, RequestContext]](

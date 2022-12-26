@@ -3,4 +3,4 @@ package model
 
 import java.util.UUID
 
-case class AuthContext(accountId: UUID)
+case class AuthContext(accountId: Option[UUID])

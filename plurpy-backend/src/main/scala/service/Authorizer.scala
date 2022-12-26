@@ -26,17 +26,17 @@ case class Authorizer(
   private val SigningAlgorithm = JwtAlgorithm.HS256
 
   def createAccessToken(accountId: UUID): IO[IOException, String] = for {
-    jsonContent <- toJson(AuthContext(accountId = accountId))
+    jsonContent <- toJson(AuthContext(accountId = Option(accountId)))
     token <- createJwtToken(jsonContent)
   } yield token
 
-  def getAuthContext(accessToken: String): IO[UnauthenticatedException, AuthContext] = {
+  def getAuthContext(accessToken: String): UIO[AuthContext] = {
     val getAuthContext = for {
       jwtClaim <- decodeJwtToken(accessToken)
       accountContext <- fromJson(jwtClaim.content)(classOf[AuthContext])
     } yield accountContext
 
-    getAuthContext.orElseFail(new UnauthenticatedException)
+    getAuthContext.orElse(ZIO.succeed(AuthContext(accountId = None)))
   }
 
   private def createJwtToken(content: String): UIO[String] = {
