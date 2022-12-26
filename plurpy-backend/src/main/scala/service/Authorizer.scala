@@ -1,16 +1,21 @@
 package org.tomasmo.plurpy
 package service
 
+import model.AuthContext
+
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtZIOJson}
-import utils.JsonUtils.toJson
+import utils.JsonUtils.{fromJson, toJson}
 import utils.TimeProvider
 import model.Configs.AuthorizerConfig
 
 import java.io.IOException
 import java.time.temporal.ChronoUnit
-import zio.{IO, UIO, ZIO}
+import zio.{IO, Task, UIO, ZIO}
 
 import java.util.UUID
+
+//TODO move to a separate file
+class UnauthenticatedException() extends Exception("Invalid or missing access token") {}
 
 //TODO write some test at least for this class
 case class Authorizer(
@@ -20,10 +25,24 @@ case class Authorizer(
 
   private val SigningAlgorithm = JwtAlgorithm.HS256
 
-  def accessToken(accountId: UUID): IO[IOException, String] = for {
-    jsonContent <- toJson(Map("accountId" -> accountId))
+  def createAccessToken(accountId: UUID): IO[IOException, String] = for {
+    jsonContent <- toJson(AuthContext(accountId = Option(accountId)))
     token <- createJwtToken(jsonContent)
   } yield token
+
+  def getAuthContext(accessToken: String): UIO[AuthContext] = {
+    val getAuthContext = for {
+      jwtClaim <- decodeJwtToken(accessToken)
+      accountContext <- fromJson(jwtClaim.content)(classOf[AuthContext])
+    } yield accountContext
+
+    getAuthContext.orElse(ZIO.succeed(AuthContext.empty))
+  }
+
+  def getAccountId(): ZIO[AuthContext, UnauthenticatedException, UUID] = for {
+    maybeAccountId <- ZIO.service[AuthContext].map(_.accountId)
+    accountId <- ZIO.fromOption(maybeAccountId).orElseFail(new UnauthenticatedException)
+  } yield accountId
 
   private def createJwtToken(content: String): UIO[String] = {
     val now = timeProvider.now()
@@ -35,5 +54,9 @@ case class Authorizer(
     )
 
     ZIO.succeed(JwtZIOJson.encode(claim, authConfig.key, SigningAlgorithm))
+  }
+
+  private def decodeJwtToken(jwtToken: String): Task[JwtClaim] = {
+    ZIO.fromTry(JwtZIOJson.decode(jwtToken, authConfig.key, Seq(SigningAlgorithm)))
   }
 }

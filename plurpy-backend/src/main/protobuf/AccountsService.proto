@@ -4,6 +4,7 @@ package org.tomasmo.plurpy.v1.account;
 
 import "Account.proto";
 
+//TODO Add all CRUD operations
 service AccountsService {
 
   // Creates an account and returns a bearer token for the account
@@ -13,8 +14,17 @@ service AccountsService {
   // The endpoint is not rate limited
   rpc Signup(SignupRequest) returns (SignupResponse) {}
 
-  // Returns bearer token if account credentials are correct else 401 (Unauthorized) will be returned
+  // Returns account access token that should be used in other endpoints for authorization
+  //
+  // Expected errors:
+  // 401 (Unauthorized) - when user is not found or credentials are incorrect
   rpc Login(LoginRequest) returns (LoginResponse) {}
+
+  // Returns currently logged in account details
+  //
+  // Expected errors:
+  // 401 (Unauthorized) - when access tokes is missing or invalid
+  rpc GetAccount(GetAccountRequest) returns (GetAccountResponse) {}
 }
 
 message SignupRequest {
@@ -34,4 +44,11 @@ message LoginRequest {
 
 message LoginResponse {
   string access_token = 1;
+}
+
+message GetAccountRequest {
+}
+
+message GetAccountResponse {
+  Account account = 1;
 }
