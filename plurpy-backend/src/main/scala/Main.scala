@@ -6,11 +6,11 @@ import model.Configs.AuthorizerConfig
 import utils.DefaultTimeProvider
 import persistence.AccountsRepositoryImpl
 import service.Authorizer
-import api.AccountsServiceImpl
+import api.{ AccountsServiceImpl, RoomsService }
 
 import io.getquill.SnakeCase
 import io.getquill.jdbczio.Quill
-import io.grpc.{ServerBuilder}
+import io.grpc.ServerBuilder
 import scalapb.zio_grpc.{RequestContext, ServerLayer}
 import zio.Console.printLine
 import zio._
@@ -80,9 +80,12 @@ object Main extends zio.ZIOAppDefault {
     configLayer,
   )
 
-  def serverLive = ServerLayer.fromServiceLayer(ServerBuilder.forPort(port))(
-    accountsServiceLayer
-  )
+  val roomsServiceLayer = ZLayer.succeed(new RoomsService)
+
+  def serverLive = {
+    ServerLayer.fromServiceLayer(ServerBuilder.forPort(port))(accountsServiceLayer) ++
+      ServerLayer.fromServiceLayer(ServerBuilder.forPort(port+1))(roomsServiceLayer)
+  }
 
   val services = welcome *> serverLive.build *> ZIO.never
 
