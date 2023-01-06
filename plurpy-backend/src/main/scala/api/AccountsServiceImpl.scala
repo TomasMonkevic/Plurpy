@@ -4,7 +4,7 @@ package api
 import utils.TimeConverters.toTimestamp
 import model.{AuthContext, Account => AccountDto, AccountInfo => AccountInfoDto}
 import persistence.AccountsRepositoryImpl
-import service.Authorizer
+import service.AuthorizerTrait
 import v1.account.AccountsService.ZioAccountsService.ZAccountsService
 import v1.account.AccountsService._
 import v1.account.Account.{Account, AccountInfo}
@@ -15,7 +15,7 @@ import zio.{URIO, ZIO}
 //TODO later don't depend on specific effect type. Use AccountsRepository
 final case class AccountsServiceImpl(
     accountsRepo: AccountsRepositoryImpl,
-    authorizer: Authorizer,
+    authorizer: AuthorizerTrait[Status],
 ) extends ZAccountsService[Any, AuthContext] {
   override def signup(request: SignupRequest): ZIO[Any, Status, SignupResponse] = {
     //TODO input validation and mapper
@@ -34,7 +34,7 @@ final case class AccountsServiceImpl(
   override def login(request: LoginRequest): ZIO[Any, Status, LoginResponse] = ???
 
   override def getAccount(request: GetAccountRequest): ZIO[AuthContext, Status, GetAccountResponse] = for {
-    accountId <- authorizer.getAccountId().orElseFail(Status.UNAUTHENTICATED.withDescription("Invalid or missing access token"))
+    accountId <- authorizer.getAccountId()
     maybeAccount <- accountsRepo.get(accountId).orElseFail(Status.INTERNAL)
     account <- ZIO.fromOption(maybeAccount).orElseFail(Status.UNAUTHENTICATED.withDescription("Invalid or missing access token"))
     _ <- ZIO.logInfo(s"Account retrieved. Data(accountId: ${account.id})")

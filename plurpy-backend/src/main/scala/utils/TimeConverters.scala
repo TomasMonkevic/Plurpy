@@ -7,7 +7,7 @@ import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit
 import java.time.{Instant, LocalDateTime}
 
-//TODO rewrite to extension methods
+//TODO wrap to zio
 object TimeConverters {
   def toTimestamp(instant: Instant): Timestamp = {
     val truncatedInstant = truncateToMilis(instant)

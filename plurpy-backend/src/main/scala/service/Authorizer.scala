@@ -17,16 +17,48 @@ import java.util.UUID
 //TODO move to a separate file
 class UnauthenticatedException() extends Exception("Invalid or missing access token") {}
 
+trait AuthorizerTrait[E] {
+  def createAccessToken(accountId: UUID): IO[E, String]
+
+  def getAuthContext(accessToken: String): UIO[AuthContext]
+
+  def getAccountId(): ZIO[AuthContext, E, UUID]
+}
+
+object AuthorizerTrait {
+  sealed trait AuthorizerError
+
+  case class ReasonA(msg: String) extends AuthorizerError
+
+  case class ReasonB(msg: String) extends AuthorizerError
+
+  def mapError[E1, E2](authorizer: AuthorizerTrait[E1])(func: E1 => E2): AuthorizerTrait[E2] = {
+    new AuthorizerTrait[E2] {
+      override def createAccessToken(accountId: UUID): IO[E2, String] = {
+        authorizer.createAccessToken(accountId).mapError(func)
+      }
+
+      override def getAuthContext(accessToken: String): UIO[AuthContext] = {
+        authorizer.getAuthContext(accessToken)
+      }
+
+      override def getAccountId(): ZIO[AuthContext, E2, UUID] = {
+        authorizer.getAccountId().mapError(func)
+      }
+    }
+  }
+}
+
 //TODO write some test at least for this class
 case class Authorizer(
     timeProvider: TimeProvider,
     authConfig: AuthorizerConfig, //TODO should the config be in environment? Maye one global config is better?
-) {
+) extends AuthorizerTrait[AuthorizerTrait.AuthorizerError] {
 
   private val SigningAlgorithm = JwtAlgorithm.HS256
 
-  def createAccessToken(accountId: UUID): IO[IOException, String] = for {
-    jsonContent <- toJson(AuthContext(accountId = Option(accountId)))
+  def createAccessToken(accountId: UUID): IO[AuthorizerTrait.ReasonA, String] = for {
+    jsonContent <- toJson(AuthContext(accountId = Option(accountId))).mapError(ex => AuthorizerTrait.ReasonA(ex.getMessage))
     token <- createJwtToken(jsonContent)
   } yield token
 
@@ -39,9 +71,9 @@ case class Authorizer(
     getAuthContext.orElse(ZIO.succeed(AuthContext.empty))
   }
 
-  def getAccountId(): ZIO[AuthContext, UnauthenticatedException, UUID] = for {
+  def getAccountId(): ZIO[AuthContext, AuthorizerTrait.ReasonB, UUID] = for {
     maybeAccountId <- ZIO.service[AuthContext].map(_.accountId)
-    accountId <- ZIO.fromOption(maybeAccountId).orElseFail(new UnauthenticatedException)
+    accountId <- ZIO.fromOption(maybeAccountId).orElseFail(AuthorizerTrait.ReasonB("some"))
   } yield accountId
 
   private def createJwtToken(content: String): UIO[String] = {
