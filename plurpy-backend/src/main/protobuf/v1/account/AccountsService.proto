@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package org.tomasmo.plurpy.v1.account;
 
-import "Account.proto";
+import "v1/account/Account.proto";
 
 //TODO Add all CRUD operations
 service AccountsService {
