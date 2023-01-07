@@ -9,26 +9,21 @@ import zio._
 import java.sql.SQLException
 import java.util.UUID
 
-trait AccountsRepository[F[_]] {
-  def insert(accountInfo: AccountInfo): F[Account]
+trait AccountsRepository {
+  def insert(accountInfo: AccountInfo): IO[SQLException, Account]
 
-  //TODO make specific uuid
-  def get(accountId: UUID): F[Option[Account]]
-}
-
-//TODO remove later
-object Bar {
-  type Foo[_] = ZIO[Any, SQLException, _]
+  //TODO make specific uuid (refined types)
+  def get(accountId: UUID): IO[SQLException, Option[Account]]
 }
 
 final case class AccountsRepositoryImpl(
     quill: Quill.Postgres[SnakeCase],
     timeProvider: TimeProvider
-) extends AccountsRepository[Bar.Foo] {
+) extends AccountsRepository {
 
   import quill._
 
-  def insert(accountInfo: AccountInfo): ZIO[Any, SQLException, Account] = {
+  def insert(accountInfo: AccountInfo): IO[SQLException, Account] = {
     val now = timeProvider.now()
 
     val insertAccountQuery = quote {
@@ -39,17 +34,21 @@ final case class AccountsRepositoryImpl(
           revision = 1,
           accountInfo = accountInfo
         )
-      )).returning(account => account) //TODO maybe returningGenerated??
+      )).returning(account => account)
     }
 
     run(insertAccountQuery)
   }
 
-  def get(accountId: UUID): ZIO[Any, SQLException, Option[Account]] = {
+  def get(accountId: UUID): IO[SQLException, Option[Account]] = {
     def getAccountByIdQuery(id: UUID) = quote {
       query[Account].filter(account => account.id == lift(id))
     }
 
     run(getAccountByIdQuery(accountId)).map(r => r.headOption)
   }
+}
+
+object AccountsRepository {
+  val live = ZLayer.fromFunction(AccountsRepositoryImpl(_, _))
 }

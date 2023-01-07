@@ -1,5 +1,7 @@
 package org.tomasmo.plurpy.utils
 
+import zio.ZLayer
+
 import java.time.Instant
 
 trait TimeProvider {
@@ -8,4 +10,8 @@ trait TimeProvider {
 
 class DefaultTimeProvider extends TimeProvider {
   override def now(): Instant = Instant.now()
+}
+
+object TimeProvider {
+  val live = ZLayer.succeed(new DefaultTimeProvider)
 }

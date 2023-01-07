@@ -1,18 +1,18 @@
 package org.tomasmo.plurpy.api
 
+import api.AuthContextTransformer
 import io.grpc.Status
 import org.tomasmo.plurpy.model.{AuthContext, Account => AccountDto, AccountInfo => AccountInfoDto}
-import org.tomasmo.plurpy.persistence.AccountsRepositoryImpl
+import org.tomasmo.plurpy.persistence.AccountsRepository
 import org.tomasmo.plurpy.service.Authorizer
 import org.tomasmo.plurpy.utils.TimeConverters.toTimestamp
 import org.tomasmo.plurpy.v1.account.Account.{Account, AccountInfo}
 import org.tomasmo.plurpy.v1.account.AccountsService.ZioAccountsService.ZAccountsService
 import org.tomasmo.plurpy.v1.account.AccountsService._
-import zio.ZIO
+import zio.{ZIO, ZLayer}
 
-//TODO later don't depend on specific effect type. Use AccountsRepository
-final case class AccountsServiceImpl(
-    accountsRepo: AccountsRepositoryImpl,
+case class AccountsService(
+    accountsRepo: AccountsRepository,
     authorizer: Authorizer,
 ) extends ZAccountsService[Any, AuthContext] {
   override def signup(request: SignupRequest): ZIO[Any, Status, SignupResponse] = {
@@ -48,4 +48,11 @@ final case class AccountsServiceImpl(
       information = Option(AccountInfo(name = Option(accDto.accountInfo.name))),
     )
   }
+}
+
+object AccountsService {
+  val live = ZLayer.fromFunction(
+    (accountsRepo: AccountsRepository, authorizer: Authorizer) =>
+      AccountsService(accountsRepo, authorizer).transformContextZIO(AuthContextTransformer(authorizer))
+  )
 }

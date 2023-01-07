@@ -1,7 +1,6 @@
 package org.tomasmo.plurpy.service
 
 import org.tomasmo.plurpy.model.AuthContext
-
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtZIOJson}
 import org.tomasmo.plurpy.utils.JsonUtils.{fromJson, toJson}
 import org.tomasmo.plurpy.utils.TimeProvider
@@ -9,18 +8,26 @@ import org.tomasmo.plurpy.model.Configs.AuthorizerConfig
 
 import java.io.IOException
 import java.time.temporal.ChronoUnit
-import zio.{IO, Task, UIO, ZIO}
+import zio.{IO, Task, UIO, ZIO, ZLayer}
 
 import java.util.UUID
 
 //TODO move to a separate file
 class UnauthenticatedException() extends Exception("Invalid or missing access token") {}
 
+trait Authorizer {
+  def createAccessToken(accountId: UUID): IO[IOException, String]
+
+  def getAuthContext(accessToken: String): UIO[AuthContext]
+
+  def getAccountId(): ZIO[AuthContext, UnauthenticatedException, UUID]
+}
+
 //TODO write some test at least for this class
-case class Authorizer(
+case class AuthorizerImpl(
     timeProvider: TimeProvider,
     authConfig: AuthorizerConfig, //TODO should the config be in environment? Maye one global config is better?
-) {
+) extends Authorizer {
 
   private val SigningAlgorithm = JwtAlgorithm.HS256
 
@@ -58,4 +65,8 @@ case class Authorizer(
   private def decodeJwtToken(jwtToken: String): Task[JwtClaim] = {
     ZIO.fromTry(JwtZIOJson.decode(jwtToken, authConfig.key, Seq(SigningAlgorithm)))
   }
+}
+
+object Authorizer {
+  val live = ZLayer.fromFunction(AuthorizerImpl(_, _))
 }
