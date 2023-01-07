@@ -1,5 +1,4 @@
-package org.tomasmo.plurpy
-package utils
+package org.tomasmo.plurpy.utils
 
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}

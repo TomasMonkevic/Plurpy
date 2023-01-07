@@ -1,5 +1,4 @@
-package org.tomasmo.plurpy
-package model
+package org.tomasmo.plurpy.model
 
 import java.time.Instant
 import java.util.UUID

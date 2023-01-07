@@ -1,5 +1,4 @@
-package org.tomasmo.plurpy
-package utils
+package org.tomasmo.plurpy.utils
 
 import java.time.Instant
 

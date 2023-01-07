@@ -1,5 +1,4 @@
-package org.tomasmo.plurpy
-package model
+package org.tomasmo.plurpy.model
 
 object Configs {
   case class AuthorizerConfig(key: String)

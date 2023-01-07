@@ -1,12 +1,11 @@
-package org.tomasmo.plurpy
-package service
+package org.tomasmo.plurpy.service
 
-import model.AuthContext
+import org.tomasmo.plurpy.model.AuthContext
 
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtZIOJson}
-import utils.JsonUtils.{fromJson, toJson}
-import utils.TimeProvider
-import model.Configs.AuthorizerConfig
+import org.tomasmo.plurpy.utils.JsonUtils.{fromJson, toJson}
+import org.tomasmo.plurpy.utils.TimeProvider
+import org.tomasmo.plurpy.model.Configs.AuthorizerConfig
 
 import java.io.IOException
 import java.time.temporal.ChronoUnit

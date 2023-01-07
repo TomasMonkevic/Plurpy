@@ -1,8 +1,7 @@
-package org.tomasmo.plurpy
-package api
+package org.tomasmo.plurpy.api
 
-import v1.room.RoomsService.ZioRoomsService.ZRoomsService
-import v1.room.RoomsService._
+import org.tomasmo.plurpy.v1.room.RoomsService.ZioRoomsService.ZRoomsService
+import org.tomasmo.plurpy.v1.room.RoomsService._
 
 import io.grpc.Status
 import zio.ZIO

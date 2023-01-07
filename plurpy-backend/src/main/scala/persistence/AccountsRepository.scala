@@ -1,15 +1,12 @@
-package org.tomasmo.plurpy
-package persistence
-
-import utils.TimeProvider
-import model.{Account, AccountInfo}
+package org.tomasmo.plurpy.persistence
 
 import io.getquill.SnakeCase
 import io.getquill.jdbczio.Quill
+import org.tomasmo.plurpy.model.{Account, AccountInfo}
+import org.tomasmo.plurpy.utils.TimeProvider
 import zio._
 
 import java.sql.SQLException
-import java.time.Instant
 import java.util.UUID
 
 trait AccountsRepository[F[_]] {

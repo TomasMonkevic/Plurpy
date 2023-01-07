@@ -1,16 +1,14 @@
-package org.tomasmo.plurpy
-package api
-
-import utils.TimeConverters.toTimestamp
-import model.{AuthContext, Account => AccountDto, AccountInfo => AccountInfoDto}
-import persistence.AccountsRepositoryImpl
-import service.Authorizer
-import v1.account.AccountsService.ZioAccountsService.ZAccountsService
-import v1.account.AccountsService._
-import v1.account.Account.{Account, AccountInfo}
+package org.tomasmo.plurpy.api
 
 import io.grpc.Status
-import zio.{URIO, ZIO}
+import org.tomasmo.plurpy.model.{AuthContext, Account => AccountDto, AccountInfo => AccountInfoDto}
+import org.tomasmo.plurpy.persistence.AccountsRepositoryImpl
+import org.tomasmo.plurpy.service.Authorizer
+import org.tomasmo.plurpy.utils.TimeConverters.toTimestamp
+import org.tomasmo.plurpy.v1.account.Account.{Account, AccountInfo}
+import org.tomasmo.plurpy.v1.account.AccountsService.ZioAccountsService.ZAccountsService
+import org.tomasmo.plurpy.v1.account.AccountsService._
+import zio.ZIO
 
 //TODO later don't depend on specific effect type. Use AccountsRepository
 final case class AccountsServiceImpl(
