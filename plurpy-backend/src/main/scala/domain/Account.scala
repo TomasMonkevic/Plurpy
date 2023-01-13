@@ -1,5 +1,7 @@
 package org.tomasmo.plurpy.domain
 
+import domain.CommonTypes.Name
+
 import java.time.Instant
 import java.util.UUID
 
@@ -12,6 +14,6 @@ case class Account(
 )
 
 case class AccountInfo(
-    name: String,
+    name: Name,
     passwordHash: String,
 )

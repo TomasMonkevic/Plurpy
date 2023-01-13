@@ -1,6 +1,7 @@
 package org.tomasmo.plurpy.repository
 
-import io.getquill.SnakeCase
+import domain.CommonTypes.Name
+import io.getquill.{MappedEncoding, SnakeCase}
 import io.getquill.jdbczio.Quill
 import org.tomasmo.plurpy.domain.{Account, AccountInfo}
 import org.tomasmo.plurpy.utils.TimeProvider
@@ -16,10 +17,16 @@ trait AccountsRepository {
   def get(accountId: UUID): IO[SQLException, Option[Account]]
 }
 
-final case class AccountsRepositoryImpl(
+case class AccountsRepositoryImpl(
     quill: Quill.Postgres[SnakeCase],
     timeProvider: TimeProvider
 ) extends AccountsRepository {
+
+  //TODO few questions here:
+  // Where should this code be placed?
+  // Maybe it's better to separate db entity and domain entity?
+  implicit val encodeName = MappedEncoding[Name, String](_.toString)
+  implicit val decodeName = MappedEncoding[String, Name](name => Name.unsafeFrom(name.trim))
 
   import quill._
 

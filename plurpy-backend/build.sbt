@@ -6,6 +6,11 @@ lazy val root = (project in file("."))
   .settings(
     name := "plurpy-backend",
 
+    scalacOptions ++= Seq(
+      "-feature",
+      "-Ymacro-annotations",
+    ),
+
     run / fork := true,
 
     Compile / PB.targets := Seq(
@@ -34,5 +39,8 @@ lazy val root = (project in file("."))
       "dev.zio" %% "zio-config" % "3.0.6",
       "dev.zio" %% "zio-config-typesafe" % "3.0.6",
       "dev.zio" %% "zio-config-magnolia" % "3.0.6",
+
+      "eu.timepit" %% "refined" % "0.10.1",
+      "io.estatico" %% "newtype" % "0.4.4",
     )
   )
