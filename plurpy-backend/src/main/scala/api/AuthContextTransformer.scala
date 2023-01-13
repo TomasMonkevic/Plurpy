@@ -1,6 +1,6 @@
 package api
 
-import org.tomasmo.plurpy.model.AuthContext
+import org.tomasmo.plurpy.domain.AuthContext
 import org.tomasmo.plurpy.service.Authorizer
 import scalapb.zio_grpc.RequestContext
 import zio.{UIO, ZIO}

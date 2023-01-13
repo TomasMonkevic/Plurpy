@@ -4,8 +4,8 @@ import io.getquill.SnakeCase
 import io.getquill.jdbczio.Quill
 import io.grpc.ServerBuilder
 import org.tomasmo.plurpy.api.{AccountsService, RoomsService}
-import org.tomasmo.plurpy.model.Configs.AuthorizerConfig
-import org.tomasmo.plurpy.persistence.AccountsRepository
+import org.tomasmo.plurpy.domain.Configs.AuthorizerConfig
+import org.tomasmo.plurpy.repository.AccountsRepository
 import org.tomasmo.plurpy.service.Authorizer
 import org.tomasmo.plurpy.utils.TimeProvider
 import org.tomasmo.plurpy.v1.account.AccountsService.ZioAccountsService.ZAccountsService

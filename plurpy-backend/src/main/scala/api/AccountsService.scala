@@ -2,8 +2,8 @@ package org.tomasmo.plurpy.api
 
 import api.AuthContextTransformer
 import io.grpc.Status
-import org.tomasmo.plurpy.model.{AuthContext, Account => AccountDto, AccountInfo => AccountInfoDto}
-import org.tomasmo.plurpy.persistence.AccountsRepository
+import org.tomasmo.plurpy.domain.{AuthContext, Account => AccountDto, AccountInfo => AccountInfoDto}
+import org.tomasmo.plurpy.repository.AccountsRepository
 import org.tomasmo.plurpy.service.Authorizer
 import org.tomasmo.plurpy.utils.TimeConverters.toTimestamp
 import org.tomasmo.plurpy.v1.account.Account.{Account, AccountInfo}

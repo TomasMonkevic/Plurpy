@@ -1,8 +1,8 @@
-package org.tomasmo.plurpy.persistence
+package org.tomasmo.plurpy.repository
 
 import io.getquill.SnakeCase
 import io.getquill.jdbczio.Quill
-import org.tomasmo.plurpy.model.{Account, AccountInfo}
+import org.tomasmo.plurpy.domain.{Account, AccountInfo}
 import org.tomasmo.plurpy.utils.TimeProvider
 import zio._
 
