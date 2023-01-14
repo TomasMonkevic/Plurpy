@@ -1,20 +1,20 @@
 package org.tomasmo.plurpy.repository
 
-import domain.CommonTypes.Name
-import io.getquill.{MappedEncoding, SnakeCase}
+import domain.CommonTypes.AccountId
+import io.getquill.{JsonValue, MappedEncoding, SnakeCase}
 import io.getquill.jdbczio.Quill
 import org.tomasmo.plurpy.domain.{Account, AccountInfo}
 import org.tomasmo.plurpy.utils.TimeProvider
 import zio._
+import zio.json._
 
 import java.sql.SQLException
 import java.util.UUID
 
 trait AccountsRepository {
-  def insert(accountInfo: AccountInfo): IO[SQLException, Account]
+  def insert(accountInfo: AccountInfo, passwordHash: String): IO[SQLException, Account]
 
-  //TODO make specific uuid (refined types)
-  def get(accountId: UUID): IO[SQLException, Option[Account]]
+  def get(accountId: AccountId): IO[SQLException, Option[Account]]
 }
 
 case class AccountsRepositoryImpl(
@@ -22,20 +22,21 @@ case class AccountsRepositoryImpl(
     timeProvider: TimeProvider
 ) extends AccountsRepository {
 
-  //TODO few questions here:
-  // Where should this code be placed?
-  // Maybe it's better to separate db entity and domain entity?
-  implicit val encodeName = MappedEncoding[Name, String](_.toString)
-  implicit val decodeName = MappedEncoding[String, Name](name => Name.unsafeFrom(name.trim))
+  implicit val encodeAccountInfo = MappedEncoding[AccountInfo, JsonValue[AccountInfo]](JsonValue[AccountInfo](_))
+  implicit val decodeAccountInfo = MappedEncoding[JsonValue[AccountInfo], AccountInfo](_.value)
+
+  implicit val encodeAccountId = MappedEncoding[AccountId, UUID](_.id)
+  implicit val decodeAccountId = MappedEncoding[UUID, AccountId](AccountId(_))
 
   import quill._
 
-  def insert(accountInfo: AccountInfo): IO[SQLException, Account] = {
+  def insert(accountInfo: AccountInfo, passwordHash: String): IO[SQLException, Account] = {
     val now = timeProvider.now()
 
     val insertAccountQuery = quote {
       query[Account].insertValue(lift(
-        Account(id = UUID.randomUUID(),
+        Account(id = AccountId.random,
+          passwordHash = passwordHash,
           dateCreated = now,
           dateUpdated = now,
           revision = 1,
@@ -47,8 +48,8 @@ case class AccountsRepositoryImpl(
     run(insertAccountQuery)
   }
 
-  def get(accountId: UUID): IO[SQLException, Option[Account]] = {
-    def getAccountByIdQuery(id: UUID) = quote {
+  def get(accountId: AccountId): IO[SQLException, Option[Account]] = {
+    def getAccountByIdQuery(id: AccountId) = quote {
       query[Account].filter(account => account.id == lift(id))
     }
 

@@ -21,10 +21,8 @@ case class AccountsService(
     //TODO don't return the raw response from refined leaking implementation details
     for {
       name <- ZIO.fromEither(Name.from(request.getAccountInfo.getName)).mapError(error => Status.INVALID_ARGUMENT.withDescription(error))
-      account <- accountsRepo.insert(AccountInfoDto(
-        name = name,
-        passwordHash = request.password //TODO password hashing
-      )).mapError(e => Status.INTERNAL.withDescription(e.getMessage)).debug("pls work?")
+      account <- accountsRepo.insert(AccountInfoDto(name = name), request.password /*TODO password hashing*/)
+        .mapError(e => Status.INTERNAL.withDescription(e.getMessage)).debug("pls work?")
       accessToken <- authorizer.createAccessToken(account.id).mapError(e => Status.INTERNAL.withDescription(e.getMessage))
       _ <- ZIO.logInfo(s"Account created. Data(accountId: ${account.id})") //TODO create a wrapper for this data
     } yield SignupResponse(account = Option(toProto(account)), accessToken = accessToken)

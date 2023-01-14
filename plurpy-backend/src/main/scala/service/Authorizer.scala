@@ -1,26 +1,25 @@
 package org.tomasmo.plurpy.service
 
+import domain.CommonTypes.AccountId
 import org.tomasmo.plurpy.domain.AuthContext
 import pdi.jwt.{JwtAlgorithm, JwtClaim, JwtZIOJson}
-import org.tomasmo.plurpy.utils.JsonUtils.{fromJson, toJson}
 import org.tomasmo.plurpy.utils.TimeProvider
 import org.tomasmo.plurpy.domain.Configs.AuthorizerConfig
 
 import java.io.IOException
 import java.time.temporal.ChronoUnit
 import zio.{IO, Task, UIO, ZIO, ZLayer}
-
-import java.util.UUID
+import zio.json._
 
 //TODO move to a separate file
 class UnauthenticatedException() extends Exception("Invalid or missing access token") {}
 
 trait Authorizer {
-  def createAccessToken(accountId: UUID): IO[IOException, String]
+  def createAccessToken(accountId: AccountId): IO[IOException, String]
 
   def getAuthContext(accessToken: String): UIO[AuthContext]
 
-  def getAccountId(): ZIO[AuthContext, UnauthenticatedException, UUID]
+  def getAccountId(): ZIO[AuthContext, UnauthenticatedException, AccountId]
 }
 
 //TODO write some test at least for this class
@@ -31,21 +30,21 @@ case class AuthorizerImpl(
 
   private val SigningAlgorithm = JwtAlgorithm.HS256
 
-  def createAccessToken(accountId: UUID): IO[IOException, String] = for {
-    jsonContent <- toJson(AuthContext(accountId = Option(accountId)))
-    token <- createJwtToken(jsonContent)
-  } yield token
+  def createAccessToken(accountId: AccountId): IO[IOException, String] = {
+    val authContextJson = AuthContext(accountId = Option(accountId)).toJson
+    createJwtToken(authContextJson)
+  }
 
   def getAuthContext(accessToken: String): UIO[AuthContext] = {
     val getAuthContext = for {
       jwtClaim <- decodeJwtToken(accessToken)
-      accountContext <- fromJson(jwtClaim.content)(classOf[AuthContext])
+      accountContext <- ZIO.fromEither(jwtClaim.content.fromJson[AuthContext])
     } yield accountContext
 
     getAuthContext.orElse(ZIO.succeed(AuthContext.empty))
   }
 
-  def getAccountId(): ZIO[AuthContext, UnauthenticatedException, UUID] = for {
+  def getAccountId(): ZIO[AuthContext, UnauthenticatedException, AccountId] = for {
     maybeAccountId <- ZIO.service[AuthContext].map(_.accountId)
     accountId <- ZIO.fromOption(maybeAccountId).orElseFail(new UnauthenticatedException)
   } yield accountId
