@@ -1,7 +1,7 @@
 package org.tomasmo.plurpy.api
 
-import api.AuthContextTransformer
-import domain.CommonTypes.Name
+import api.{AuthContextTransformer, StatusErrors}
+import domain.CommonTypes.{Name, Password}
 import io.grpc.Status
 import org.tomasmo.plurpy.domain.{AuthContext, Account => AccountDto, AccountInfo => AccountInfoDto}
 import org.tomasmo.plurpy.repository.AccountsRepository
@@ -16,24 +16,24 @@ case class AccountsService(
     accountsRepo: AccountsRepository,
     authorizer: Authorizer,
 ) extends ZAccountsService[Any, AuthContext] {
-  override def signup(request: SignupRequest): ZIO[Any, Status, SignupResponse] = {
-    //TODO input validation and mapper
-    //TODO don't return the raw response from refined leaking implementation details
-    for {
-      name <- ZIO.fromEither(Name.from(request.getAccountInfo.getName)).mapError(error => Status.INVALID_ARGUMENT.withDescription(error))
-      account <- accountsRepo.insert(AccountInfoDto(name = name), request.password /*TODO password hashing*/)
-        .mapError(e => Status.INTERNAL.withDescription(e.getMessage)).debug("pls work?")
-      accessToken <- authorizer.createAccessToken(account.id).mapError(e => Status.INTERNAL.withDescription(e.getMessage))
-      _ <- ZIO.logInfo(s"Account created. Data(accountId: ${account.id})") //TODO create a wrapper for this data
-    } yield SignupResponse(account = Option(toProto(account)), accessToken = accessToken)
-  }
+  override def signup(request: SignupRequest): ZIO[Any, Status, SignupResponse] = for {
+    (accountInfo, password) <- validateAndMap(request)
+    account <- accountsRepo.insert(accountInfo, password.value /*TODO password hashing*/).mapError(_ => StatusErrors.failedToInsertAccount)
+    accessToken <- authorizer.createAccessToken(account.id).mapError(_ => StatusErrors.failedToCreateAccessToken)
+    _ <- ZIO.logInfo(s"Account created. Data(accountId: ${account.id})") //TODO create a wrapper for this data
+  } yield SignupResponse(account = Option(toProto(account)), accessToken = accessToken)
+
+  private def validateAndMap(request: SignupRequest): ZIO[Any, Status, (AccountInfoDto, Password)] = for {
+    name <- ZIO.fromEither(Name.from(request.getAccountInfo.getName)).mapError(_ => StatusErrors.invalidName)
+    password <- ZIO.fromEither(Password.from(request.password)).mapError(_ => StatusErrors.invalidPassword)
+  } yield (AccountInfoDto(name = name), password)
 
   override def login(request: LoginRequest): ZIO[Any, Status, LoginResponse] = ???
 
   override def getAccount(request: GetAccountRequest): ZIO[AuthContext, Status, GetAccountResponse] = for {
-    accountId <- authorizer.getAccountId().mapError(_ => Status.UNAUTHENTICATED.withDescription("Invalid or missing access token"))
-    maybeAccount <- accountsRepo.get(accountId).mapError(_ => Status.INTERNAL)
-    account <- ZIO.fromOption(maybeAccount).mapError(_ => Status.UNAUTHENTICATED.withDescription("Invalid or missing access token"))
+    accountId <- authorizer.getAccountId().mapError(_ => StatusErrors.unauthenticated)
+    maybeAccount <- accountsRepo.get(accountId).mapError(_ => StatusErrors.failedToGetAccount)
+    account <- ZIO.fromOption(maybeAccount).mapError(_ => StatusErrors.unauthenticated)
     _ <- ZIO.logInfo(s"Account retrieved. Data(accountId: ${account.id})")
   } yield GetAccountResponse(account = Option(toProto(account)))
 

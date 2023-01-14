@@ -1,3 +1,5 @@
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "2.13.10"
@@ -32,9 +34,6 @@ lazy val root = (project in file("."))
       "org.postgresql" % "postgresql" % "42.2.8",
 
       "com.github.jwt-scala" %% "jwt-zio-json" % "9.1.2",
-
-      "com.fasterxml.jackson.core" % "jackson-databind" % "2.14.1",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.1",
 
       "dev.zio" %% "zio-config" % "3.0.6",
       "dev.zio" %% "zio-config-typesafe" % "3.0.6",

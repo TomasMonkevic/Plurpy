@@ -2,8 +2,7 @@ syntax = "proto3";
 
 package org.tomasmo.plurpy.v1.room;
 
-//TODO Add all CRUD operations
-// Work only with the logged in account context
+// Works only with the logged in account context
 service RoomsService {
 
   // Creates a room and returns it
