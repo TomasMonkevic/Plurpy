@@ -1,3 +1,5 @@
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "2.13.10"
@@ -5,6 +7,11 @@ ThisBuild / scalaVersion := "2.13.10"
 lazy val root = (project in file("."))
   .settings(
     name := "plurpy-backend",
+
+    scalacOptions ++= Seq(
+      "-feature",
+      "-Ymacro-annotations",
+    ),
 
     run / fork := true,
 
@@ -28,11 +35,11 @@ lazy val root = (project in file("."))
 
       "com.github.jwt-scala" %% "jwt-zio-json" % "9.1.2",
 
-      "com.fasterxml.jackson.core" % "jackson-databind" % "2.14.1",
-      "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.1",
-
       "dev.zio" %% "zio-config" % "3.0.6",
       "dev.zio" %% "zio-config-typesafe" % "3.0.6",
       "dev.zio" %% "zio-config-magnolia" % "3.0.6",
+
+      "eu.timepit" %% "refined" % "0.10.1",
+      "io.estatico" %% "newtype" % "0.4.4",
     )
   )

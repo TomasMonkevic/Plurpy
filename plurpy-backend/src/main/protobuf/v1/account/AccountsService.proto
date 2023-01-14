@@ -4,7 +4,6 @@ package org.tomasmo.plurpy.v1.account;
 
 import "v1/account/Account.proto";
 
-//TODO Add all CRUD operations
 service AccountsService {
 
   // Creates an account and returns a bearer token for the account
